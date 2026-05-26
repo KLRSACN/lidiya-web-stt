@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube 音樂助手 & MiniMax 提示詞大師</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0d0e15;
+            color: #f3f4f6;
+        }
+        .glow-effect {
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.2);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- 質感提示 Modal (取代傳統 alert) -->
+    <div id="custom-alert" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl transform scale-95 transition-all duration-200">
+            <h3 class="text-lg font-bold text-red-400 mb-2 flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i> 系統提示
+            </h3>
+            <p id="alert-message" class="text-gray-300 text-sm mb-6 leading-relaxed">提示內容</p>
+            <button onclick="closeAlert()" class="w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl transition-all">
+                我知道了
+            </button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="border-b border-gray-800 bg-gray-950/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-violet-600 to-pink-500 p-2.5 rounded-xl shadow-lg">
+                    <i class="fas fa-music text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wider gradient-text">YouTube 轉 MiniMax 智慧管家</h1>
+                    <p class="text-xs text-gray-400">下載音樂 & AI 提示詞生成一站式工具</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('minimax-tab', this)" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 bg-violet-600 text-white shadow-md">
+                    <i class="fas fa-brain mr-1.5"></i> MiniMax 提示詞生成
+                </button>
+                <button onclick="switchTab('downloader-tab', this)" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 bg-gray-900 text-gray-300 hover:bg-gray-800">
+                    <i class="fas fa-download mr-1.5"></i> 下載本機程式
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
+        <!-- Input Hero Area -->
+        <section class="bg-gradient-to-b from-gray-900 to-gray-950 rounded-2xl p-6 mb-8 border border-gray-800 glow-effect">
+            <h2 class="text-lg font-semibold mb-4 text-violet-400 flex items-center gap-2">
+                <i class="fab fa-youtube text-red-500"></i> 請輸入 YouTube 網址或歌曲名稱
+            </h2>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div class="lg:col-span-7 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <input type="text" id="musicQuery" placeholder="貼上 YouTube 影片網址，或輸入歌手/歌名 (例如：周杰倫 晴天)..." 
+                           class="w-full pl-10 pr-4 py-3.5 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-white placeholder-gray-500 transition-all duration-200">
+                </div>
+                <div class="lg:col-span-3">
+                    <input type="text" id="styleModifier" placeholder="風格微調 (例如：改編成爵士樂、女聲)..." 
+                           class="w-full px-4 py-3.5 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-white placeholder-gray-500 transition-all duration-200">
+                </div>
+                <div class="lg:col-span-2">
+                    <button onclick="startAnalysis()" class="w-full h-full py-3.5 bg-gradient-to-r from-violet-600 to-pink-500 hover:from-violet-700 hover:to-pink-600 text-white font-bold rounded-xl shadow-lg hover:shadow-violet-500/20 active:scale-95 transition-all duration-150 flex items-center justify-center gap-2">
+                        <i class="fas fa-wand-magic-sparkles"></i> 立即分析
+                    </button>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-3 gap-2">
+                <p class="text-xs text-gray-400"><i class="fas fa-info-circle mr-1"></i> 提示：您可以直接輸入歌名，AI 會自動在網路上搜尋並提供正確的 YouTube 影片網址與分析！</p>
+            </div>
+        </section>
+
+        <!-- Dynamic Panel Container -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Panel (Tab 1 Content) -->
+            <div id="minimax-tab-content" class="lg:col-span-12 space-y-8">
+                <!-- Status/Loader -->
+                <div id="loading-state" class="hidden bg-gray-900/60 border border-gray-800 rounded-xl p-12 text-center">
+                    <div class="inline-block relative w-16 h-16 mb-4">
+                        <div class="absolute inset-0 border-4 border-violet-500/20 rounded-full"></div>
+                        <div class="absolute inset-0 border-4 border-t-violet-500 rounded-full animate-spin"></div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-200">AI 正在抓取並深度分析歌曲中...</h3>
+                    <p class="text-sm text-gray-400 mt-2 max-w-md mx-auto">我們正在運用 Google 搜尋查找此歌曲的曲風、BPM、原版歌詞、對應的 YouTube 影片與人聲特色...</p>
+                </div>
+
+                <!-- Ready State -->
+                <div id="result-state" class="hidden space-y-6">
+                    <!-- One-Click Copy All Header Action -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-900 border border-gray-800 rounded-2xl p-4 gap-4">
+                        <div>
+                            <h3 class="text-md font-bold text-white flex items-center gap-2">
+                                <i class="fas fa-star text-yellow-400"></i> MiniMax 專屬快捷面板
+                            </h3>
+                            <p class="text-xs text-gray-400">一鍵帶走所有產生參數，極速在海螺 AI 完成創作！</p>
+                        </div>
+                        <button id="copy-all-btn" onclick="copyAllToClipboard()" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition-all duration-150 flex items-center justify-center gap-2">
+                            <i class="fas fa-copy text-lg"></i> <span>一鍵複製全部 (歌名 + 歌詞 + 風格標籤)</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <!-- Left Column: Metrics & Analysis -->
+                        <div class="lg:col-span-5 space-y-6">
+                            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                                <h3 class="text-md font-bold text-violet-400 mb-4 flex items-center gap-2 border-b border-gray-800 pb-2">
+                                    <i class="fas fa-chart-simple"></i> 歌曲特徵提取
+                                </h3>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-800/50">
+                                        <span class="text-gray-400 text-sm">解析目標</span>
+                                        <span id="meta-title" class="text-white font-medium text-sm truncate max-w-[200px]">載入中...</span>
+                                    </div>
+                                    <!-- 新增：來源網址顯示與一鍵複製 -->
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-800/50">
+                                        <span class="text-gray-400 text-sm">來源影片網址</span>
+                                        <div class="flex items-center gap-2">
+                                            <a id="meta-source-url" href="#" target="_blank" class="text-violet-400 hover:text-violet-300 text-sm font-medium underline truncate max-w-[120px]">未設定網址</a>
+                                            <button onclick="copySourceUrl()" class="text-xs bg-gray-800 hover:bg-gray-700 text-violet-300 p-1.5 rounded-md transition-all" title="複製 YouTube 網址">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-800/50">
+                                        <span class="text-gray-400 text-sm">音樂風格 (Genre)</span>
+                                        <span id="meta-genre" class="bg-violet-900/40 text-violet-300 text-xs px-2.5 py-1 rounded-full font-medium">Pop / Ballad</span>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-800/50">
+                                        <span class="text-gray-400 text-sm">節奏速率 (BPM)</span>
+                                        <span id="meta-bpm" class="text-pink-400 font-bold text-sm">75 - 80 BPM</span>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-800/50">
+                                        <span class="text-gray-400 text-sm">人聲特色</span>
+                                        <span id="meta-vocal" class="text-white text-sm text-right max-w-[180px] truncate">溫柔清澈女聲</span>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2">
+                                        <span class="text-gray-400 text-sm">核心樂器</span>
+                                        <span id="meta-instruments" class="text-gray-300 text-xs text-right max-w-[180px] truncate">鋼琴、環境電子音效</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MiniMax Generate Guide -->
+                            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                                <h3 class="text-md font-bold text-pink-400 mb-3 flex items-center gap-2">
+                                    <i class="fas fa-lightbulb"></i> MiniMax 生成小撇步
+                                </h3>
+                                <ul class="text-sm text-gray-300 space-y-2 list-disc list-inside">
+                                    <li>我們已優化改寫算法，新歌詞的<b>行句字數</b>與<b>押韻模式</b>完全對稱原曲，可完美穩定旋律！</li>
+                                    <li>將 <strong class="text-violet-300">風格標籤</strong> 複製到 MiniMax 的「風格描述」中。</li>
+                                    <li>將 <strong class="text-violet-300">格式化歌詞</strong> 複製到「歌詞輸入框」中。</li>
+                                    <li><code>[Instrumental Solo]</code> 標籤能強迫 AI 生成一段純器樂演奏。</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Results & Prompts -->
+                        <div class="lg:col-span-7 space-y-6">
+                            <!-- MiniMax Style Prompt Box -->
+                            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 relative">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h3 class="text-md font-bold text-white flex items-center gap-2">
+                                        <span class="bg-violet-500 text-white text-xs px-2 py-0.5 rounded">1</span> 
+                                        MiniMax 風格標籤 (Style Prompt)
+                                    </h3>
+                                    <button id="copy-style-btn" onclick="copyPrompt('style-prompt-text', 'copy-style-btn')" class="text-xs bg-gray-800 hover:bg-gray-700 text-violet-300 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1">
+                                        <i class="fas fa-copy"></i> 複製風格
+                                    </button>
+                                </div>
+                                <textarea id="style-prompt-text" readonly class="w-full h-20 bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200 focus:outline-none resize-none font-mono"></textarea>
+                            </div>
+
+                            <!-- MiniMax Lyrics Box -->
+                            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 relative">
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
+                                    <h3 class="text-md font-bold text-white flex items-center gap-2">
+                                        <span class="bg-pink-500 text-white text-xs px-2 py-0.5 rounded">2</span> 
+                                        格式化歌詞 (Lyrical Prompt with Tags)
+                                    </h3>
+                                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                                        <!-- 單獨歌詞變化輸入框與按鈕 -->
+                                        <input type="text" id="lyricModifierInput" placeholder="歌詞字數對齊變換(例: 改為傷感、古風、英文)" 
+                                               class="text-xs bg-gray-950 border border-gray-800 rounded-lg px-2.5 py-1.5 text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-500 w-full sm:w-48">
+                                        <button id="modify-lyrics-btn" onclick="modifyLyrics()" class="text-xs bg-pink-900/40 hover:bg-pink-800/40 text-pink-300 px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1 whitespace-nowrap">
+                                            <i class="fas fa-magic"></i> 變換
+                                        </button>
+                                        <button id="copy-lyrics-btn" onclick="copyPrompt('lyrics-prompt-text', 'copy-lyrics-btn')" class="text-xs bg-gray-800 hover:bg-gray-700 text-pink-300 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 whitespace-nowrap">
+                                            <i class="fas fa-copy"></i> 複製
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- 歌詞專用變化載入遮罩 -->
+                                <div id="lyrics-loading-overlay" class="hidden absolute inset-0 bg-gray-950/80 rounded-2xl flex flex-col justify-center items-center z-10">
+                                    <div class="inline-block relative w-8 h-8 mb-2">
+                                        <div class="absolute inset-0 border-2 border-pink-500/20 rounded-full"></div>
+                                        <div class="absolute inset-0 border-2 border-t-pink-500 rounded-full animate-spin"></div>
+                                    </div>
+                                    <p class="text-xs text-pink-400">正在穩定轉化新歌詞...</p>
+                                </div>
+
+                                <textarea id="lyrics-prompt-text" readonly class="w-full h-80 bg-gray-950 border border-gray-800 rounded-xl p-4 text-sm text-gray-200 focus:outline-none resize-y font-mono"></textarea>
+                            </div>
+
+                            <!-- Full Explanation Block -->
+                            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                                <h3 class="text-md font-bold text-gray-200 mb-3 flex items-center gap-2">
+                                    <i class="fas fa-align-left"></i> 深度歌曲結構分析與建議
+                                </h3>
+                                <div id="full-analysis-text" class="text-sm text-gray-400 leading-relaxed space-y-2">
+                                    <!-- Loaded dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty/Placeholder State -->
+                <div id="empty-state" class="bg-gray-900/30 border border-gray-800 rounded-2xl p-16 text-center">
+                    <div class="inline-flex justify-center items-center w-16 h-16 bg-gray-800/50 text-gray-500 rounded-full mb-4">
+                        <i class="fas fa-music text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-300">尚未進行任何歌曲分析</h3>
+                    <p class="text-sm text-gray-500 mt-2 max-w-sm mx-auto">在上方輸入框中輸入您喜愛的歌曲名稱，我們將立即為您尋找影片網址並量身打造 MiniMax 生成計畫！</p>
+                </div>
+            </div>
+
+            <!-- Tab 2 Content: Downloader Tool & Guide -->
+            <div id="downloader-tab-content" class="hidden lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Left Column: Guide and Online Alternatives -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                        <h3 class="text-md font-bold text-violet-400 mb-3 flex items-center gap-2">
+                            <i class="fas fa-shield-halved"></i> 本地下載與免安裝線上捷徑
+                        </h3>
+                        <p class="text-sm text-gray-300 leading-relaxed mb-4">
+                            當您在第一步進行「歌曲分析」後，系統會自動在背景取得該歌曲的 <b>YouTube 影片連結</b>。 
+                            您可以選擇直接點擊下方按鈕，在新分頁中直接下載（會自動為您複製好 YouTube 網址，非常方便！）。
+                        </p>
+                        <div class="bg-gray-950 p-4 rounded-xl border border-gray-800 space-y-3 text-xs mb-4">
+                            <div class="flex items-start gap-2">
+                                <span class="bg-violet-600/30 text-violet-400 px-1.5 py-0.5 rounded font-bold">極速 1</span>
+                                <p class="text-gray-400">分析完成後，系統會自動複製找到的音樂網址，您只需直接跳轉貼上。</p>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="bg-pink-600/30 text-pink-400 px-1.5 py-0.5 rounded font-bold">極速 2</span>
+                                <p class="text-gray-400">免去您自己上 YouTube 搜尋、複製網址的繁瑣步驟！</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Online Converter Shortcuts -->
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                        <h3 class="text-md font-bold text-pink-400 mb-3 flex items-center gap-2">
+                            <i class="fas fa-external-link-alt"></i> 一鍵線上免安裝轉換捷徑
+                        </h3>
+                        <p class="text-xs text-gray-400 mb-4">點擊以下任一按鈕，系統會<b>自動複製當前分析的網址</b>，並為您開啟下載平台，您只需按 Paste/貼上 即可：</p>
+                        <div class="space-y-3">
+                            <button onclick="openOnlineConverter('https://y2mate.is')" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm py-3 px-4 rounded-xl transition-all flex justify-between items-center">
+                                <span><i class="fas fa-globe text-blue-400 mr-2"></i>y2mate.is (快速好用)</span>
+                                <i class="fas fa-arrow-right text-xs"></i>
+                            </button>
+                            <button onclick="openOnlineConverter('https://320ytmp3.com')" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm py-3 px-4 rounded-xl transition-all flex justify-between items-center">
+                                <span><i class="fas fa-headphones text-pink-400 mr-2"></i>320ytmp3 (支援高品質 mp3)</span>
+                                <i class="fas fa-arrow-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Python Script & Instructions -->
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-md font-bold text-white flex items-center gap-2">
+                                <i class="fab fa-python text-yellow-400"></i> 本地 Python 下載器 (自動定位 & 彈出路徑版)
+                            </h3>
+                            <button id="copy-code-btn" onclick="copyPrompt('python-code-text', 'copy-code-btn')" class="text-xs bg-gray-800 hover:bg-gray-700 text-yellow-300 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1">
+                                <i class="fas fa-copy"></i> 複製原始碼
+                            </button>
+                        </div>
+                        
+                        <div class="relative">
+                            <textarea id="python-code-text" readonly class="w-full h-80 bg-gray-950 border border-gray-800 rounded-xl p-4 text-xs text-gray-300 font-mono focus:outline-none resize-y">import os
+import sys
+import subprocess
+import platform
+
+# 檢查並安裝 yt-dlp 庫
+def install_dependencies():
+    print("==================================================")
+    print("正在為您檢查並自動安裝必要下載套件 (yt-dlp)...")
+    print("==================================================")
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "yt-dlp"])
+        print("\n🎉 必要套件安裝完成！")
+    except Exception as e:
+        print(f"\n❌ 套件安裝失敗，請嘗試手動在終端機輸入: pip install yt-dlp\n錯誤訊息: {e}")
+        input("\n按下任意鍵結束...")
+        sys.exit(1)
+
+try:
+    import yt_dlp
+except ImportError:
+    install_dependencies()
+    import yt_dlp
+
+# 自動打開下載目錄
+def open_download_folder(path):
+    print(f"\n📂 下載完成！正在為您自動打開儲存資料夾...")
+    try:
+        if platform.system() == "Windows":
+            os.startfile(path)
+        elif platform.system() == "Darwin": # macOS
+            subprocess.Popen(["open", path])
+        else: # Linux
+            subprocess.Popen(["xdg-open", path])
+    except Exception as e:
+        print(f"無法自動開啟資料夾，請手動前往：{path}")
+
+def download_audio(url):
+    # 定位使用者系統的「下載 (Downloads)」資料夾
+    user_home = os.path.expanduser("~")
+    download_folder = os.path.join(user_home, "Downloads")
+    
+    # 防呆：若 Downloads 資料夾不存在，使用程式所在目錄
+    if not os.path.exists(download_folder):
+        download_folder = os.path.dirname(os.path.abspath(__file__))
+
+    print("\n" + "="*50)
+    print(f"📂 本次音樂將儲存至：{download_folder}")
+    print("="*50)
+    print("[分析中] 正在抓取 YouTube 音訊流，請稍候...")
+    
+    # 下載設定：存入下載路徑，最佳音質
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': os.path.join(download_folder, '%(title)s.%(ext)s'),
+        'restrictfilenames': True,
+        'noplaylist': True,
+        # 嘗試解碼成 MP3 (若環境無 FFmpeg 則維持 M4A/WebM)
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
+    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            print("\n" + "="*50)
+            print(f"🎉 音樂下載成功！")
+            print(f"🎵 歌名: {info.get('title')}")
+            print(f"💾 檔案已安全儲存在您的「下載」資料夾中！")
+            print("="*50)
+            
+            # 下載成功後自動開啟資料夾
+            open_download_folder(download_folder)
+
+    except yt_dlp.utils.PostProcessingError:
+        # 當無安裝 FFmpeg 時，會跳過轉檔，但音樂檔 (.m4a/.webm) 其實已完好下載
+        print("\n" + "="*50)
+        print("🎉 音樂下載成功！(已下載原生高品質音訊 m4a/webm 檔案)")
+        print("💡 提示：若需自動轉 MP3 格式，可在電腦中安裝 FFmpeg。")
+        print("💾 檔案已安全儲存在您的「下載」資料夾中！")
+        print("="*50)
+        open_download_folder(download_folder)
+        
+    except Exception as e:
+        print(f"\n❌ 下載失敗，可能原因：\n1. 網址錯誤\n2. 網路連線中斷\n3. YouTube 官方機制變更 (請更新套件: pip install -U yt-dlp)")
+        print(f"詳細錯誤訊息: {e}")
+
+if __name__ == "__main__":
+    print("==================================================")
+    print("        YouTube 音樂高音質快速下載器 (自帶存檔定位)")
+    print("==================================================")
+    
+    url = input("請貼上 YouTube 影片或音樂網址: ").strip()
+    if url:
+        download_audio(url)
+    else:
+        print("❌ 未輸入網址，程式結束。")
+    
+    input("\n[結束] 按下任意鍵退出視窗...")
+</textarea>
+                        </div>
+
+                        <!-- Running guide steps -->
+                        <h4 class="text-sm font-bold text-gray-200 mt-6 mb-3">🛠️ 如何在您的電腦上執行此程式？</h4>
+                        <div class="space-y-4 text-sm text-gray-300">
+                            <div class="flex gap-3">
+                                <div class="flex-shrink-0 bg-gray-800 text-violet-400 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">1</div>
+                                <p><strong>安裝 Python</strong>：前往 <a href="https://www.python.org" target="_blank" class="text-violet-400 hover:underline">Python 官方網站</a> 安裝最新版，安裝時<b>務必勾選</b> <code>Add Python to PATH</code>。</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="flex-shrink-0 bg-gray-800 text-violet-400 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">2</div>
+                                <p><strong>建立檔案</strong>：在桌面點右鍵新增一個文字文件，命名為 <code>yt_downloader.py</code>（副檔名必須為 <code>.py</code> ），將上方最新原始碼複製貼上存檔。</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="flex-shrink-0 bg-gray-800 text-violet-400 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">3</div>
+                                <p><strong>雙擊執行</strong>：直接點擊兩下執行 <code>yt_downloader.py</code>。貼上剛剛由網頁 AI 自動找出來的 YouTube 網址，完成後它會<b>自動彈出您的下載資料夾</b>，非常方便！</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-950 border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+        <p class="mb-2">© 2026 YouTube 音樂下載 & MiniMax 提示詞大師. All rights reserved.</p>
+        <p>本工具採用國產高效能 Gemini 2.5 進行音樂解構，產出最佳生成配方。</p>
+    </footer>
+
+    <!-- Script Area -->
+    <script>
+        // API Configuration (環境自動提供，無需手動配置金鑰)
+        const apiKey = ""; 
+        let globalSourceUrl = ""; // 用於全域存放自動尋找到的 YouTube 網址
+
+        // 自製彈窗控制
+        function showCustomAlert(msg) {
+            document.getElementById('alert-message').innerText = msg;
+            document.getElementById('custom-alert').classList.remove('hidden');
+        }
+
+        function closeAlert() {
+            document.getElementById('custom-alert').classList.add('hidden');
+        }
+
+        // Exponential backoff runner
+        async function fetchWithBackoff(url, options, retries = 5, delay = 1000) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) {
+                    throw new Error(`HTTP 錯誤狀態碼: ${res.status}`);
+                }
+                return await res.json();
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithBackoff(url, options, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+
+        // Switch Tabs
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('bg-violet-600', 'text-white', 'shadow-md');
+                b.classList.add('bg-gray-900', 'text-gray-300');
+            });
+            btn.classList.add('bg-violet-600', 'text-white', 'shadow-md');
+            btn.classList.remove('bg-gray-900', 'text-gray-300');
+
+            if (tabId === 'minimax-tab') {
+                document.getElementById('minimax-tab-content').classList.remove('hidden');
+                document.getElementById('downloader-tab-content').classList.add('hidden');
+            } else {
+                document.getElementById('minimax-tab-content').classList.add('hidden');
+                document.getElementById('downloader-tab-content').classList.remove('hidden');
+            }
+        }
+
+        // 複製 YouTube 來源網址
+        function copySourceUrl() {
+            if (globalSourceUrl) {
+                const tempInput = document.createElement("textarea");
+                tempInput.value = globalSourceUrl;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                showCustomAlert("YouTube 來源網址已複製到您的剪貼簿！");
+            } else {
+                showCustomAlert("目前尚未分析出有效的 YouTube 網址。");
+            }
+        }
+
+        // Core Analysis trigger
+        async function startAnalysis() {
+            const query = document.getElementById('musicQuery').value.trim();
+            const modifier = document.getElementById('styleModifier').value.trim();
+
+            if (!query) {
+                showCustomAlert("請先輸入 YouTube 網址或歌曲名稱！");
+                return;
+            }
+
+            // UI state updates
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('result-state').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+
+            const minimaxTabBtn = document.querySelectorAll('.tab-btn')[0];
+            switchTab('minimax-tab', minimaxTabBtn);
+
+            try {
+                // 升級：1.要求AI找出對應的YouTube連結 2.要求歌詞必須在核心不變下，字數與句式高度對齊以穩定旋律。
+                const systemPrompt = `
+You are an elite music analyst and MiniMax (HaiLuo AI Music) Prompt Engineer. Your job is to analyze the requested YouTube video or song name. You MUST use Google Search to find the exact official or high-quality YouTube video URL of this song. 
+
+You must output EXACTLY the following sections in Traditional Chinese (繁體中文). Keep the output clean.
+
+Output format should follow this exact style so the frontend JS can parse it:
+1. "Source URL: [Found YouTube URL]" - This is mandatory. You must search and output the YouTube link you found.
+2. "BPM: [value]"
+3. "Genre: [value]"
+4. "Vocal: [value]"
+5. "Instruments: [value]"
+6. "Style Tags: [comma-separated list of tags in English optimal for MiniMax]"
+7. "Lyrics: [Rewritten lyrics]"
+   - CRITICAL REQUIREMENT FOR LYRICS STABILIZATION: You must REWRITE the lyrics to avoid copyright issues, but you MUST strictly match the exact syllable/character count per line, the sentence structures, and rhyming patterns of the original song (歌詞改寫時，每行字數、節奏 pacing 與押韻格式必須與原版歌詞 100% 高度對齊、字數相同、格式對稱，這樣能確保 MiniMax 生成音樂時，音律分配完美對齊，旋律與曲調穩定不跑調跑歌). Preserve all bracket tags like [Intro], [Verse 1], [Chorus], [Bridge], [Outro] etc., where they fit naturally.
+8. "Explanation: [Detailed musical structural analysis]"
+`;
+
+                const userQuery = `分析目標歌曲: ${query}
+風格調整需求 (如果有的話): ${modifier || '依照原曲風格重現'}`;
+
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] }
+                };
+
+                const data = await fetchWithBackoff(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!rawText) {
+                    throw new Error("未能從 AI 取得有效回應。");
+                }
+
+                // Process and Render output
+                parseAndDisplayResult(rawText, query);
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('empty-state').classList.remove('hidden');
+                showCustomAlert("分析失敗，請檢查網路連線。錯誤資訊: " + err.message);
+            }
+        }
+
+        // Parse AI response to populate UI elements
+        function parseAndDisplayResult(text, rawQuery) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('result-state').classList.remove('hidden');
+
+            // 1. 提取 AI 搜尋到的 YouTube 來源網址
+            const urlMatch = text.match(/(?:Source URL|來源網址|網址)[：:]?\s*(https?:\/\/[^\s]+)/i);
+            const sourceUrlElement = document.getElementById('meta-source-url');
+            if (urlMatch) {
+                globalSourceUrl = urlMatch[1].trim();
+                sourceUrlElement.href = globalSourceUrl;
+                sourceUrlElement.innerText = "已尋獲音樂影片";
+                sourceUrlElement.classList.remove('text-gray-500');
+                sourceUrlElement.classList.add('text-violet-400');
+            } else {
+                // 如果是使用者貼上來的原本就是網址
+                if (rawQuery.startsWith('http')) {
+                    globalSourceUrl = rawQuery;
+                    sourceUrlElement.href = globalSourceUrl;
+                    sourceUrlElement.innerText = "已尋獲音樂影片";
+                    sourceUrlElement.classList.remove('text-gray-500');
+                    sourceUrlElement.classList.add('text-violet-400');
+                } else {
+                    globalSourceUrl = "";
+                    sourceUrlElement.href = "#";
+                    sourceUrlElement.innerText = "點此打開影片";
+                    sourceUrlElement.classList.add('text-gray-500');
+                    sourceUrlElement.classList.remove('text-violet-400');
+                }
+            }
+
+            // 2. 提取其餘資訊
+            document.getElementById('meta-title').innerText = rawQuery.replace(/https?:\/\/[^\s]+/, '').trim() || "YouTube 音樂連結";
+            
+            const genreMatch = text.match(/(?:曲風|風格|Genre)[：:]?\s*([^\n]+)/i);
+            document.getElementById('meta-genre').innerText = genreMatch ? genreMatch[1].trim() : "Pop / Electronic";
+
+            const bpmMatch = text.match(/(?:BPM|速度|Tempo)[：:]?\s*([^\n]+)/i);
+            document.getElementById('meta-bpm').innerText = bpmMatch ? bpmMatch[1].trim() : "85 - 110 BPM";
+
+            const vocalMatch = text.match(/(?:人聲|歌手|人聲特色|Vocal)[：:]?\s*([^\n]+)/i);
+            document.getElementById('meta-vocal').innerText = vocalMatch ? vocalMatch[1].trim() : "溫柔清澈女聲";
+
+            const instMatch = text.match(/(?:樂器|編製|Instruments)[：:]?\s*([^\n]+)/i);
+            document.getElementById('meta-instruments').innerText = instMatch ? instMatch[1].trim() : "鋼琴、環境電子音效";
+
+            const stylePromptBlock = text.match(/[\w\s,-]+vocal[\w\s,-]+/i) || text.match(/(?:風格標籤|Style Tags)[：:]?\s*([^\n#]+)/i);
+            if (stylePromptBlock) {
+                document.getElementById('style-prompt-text').value = stylePromptBlock[0].replace(/風格標籤|Style Tags|[：:]/g, '').trim();
+            } else {
+                document.getElementById('style-prompt-text').value = "100 BPM, pop, emotional melodic female vocal, acoustic piano, soft pads, high quality production";
+            }
+
+            // 提取歌詞
+            let lyricsContent = "";
+            const lines = text.split('\n');
+            let capturingLyrics = false;
+            
+            for (let line of lines) {
+                if (line.includes('[') || line.includes('Intro') || line.includes('Chorus') || line.includes('歌詞') || line.includes('Lyrics')) {
+                    capturingLyrics = true;
+                }
+                // 避免捕獲到後面解釋的部分
+                if (capturingLyrics && (line.includes('Explanation') || line.includes('結構分析') || line.includes('深度歌曲'))) {
+                    capturingLyrics = false;
+                }
+                if (capturingLyrics) {
+                    lyricsContent += line + "\n";
+                }
+            }
+            
+            if (lyricsContent.length > 50) {
+                document.getElementById('lyrics-prompt-text').value = lyricsContent.trim();
+            } else {
+                document.getElementById('lyrics-prompt-text').value = text;
+            }
+
+            // Set Full Explanation
+            const formattedExplanation = text.split('\n').map(line => `<p class="mb-1">${line}</p>`).join('');
+            document.getElementById('full-analysis-text').innerHTML = formattedExplanation;
+        }
+
+        // Custom copy command for safely operating within iframe environments
+        function copyPrompt(textareaId, buttonId) {
+            const copyText = document.getElementById(textareaId).value;
+            executeCopyAction(copyText, buttonId, "已複製！");
+        }
+
+        // One click copy style prompt and lyrics combined
+        function copyAllToClipboard() {
+            const title = document.getElementById('meta-title').innerText || "未命名歌曲";
+            const style = document.getElementById('style-prompt-text').value;
+            const lyrics = document.getElementById('lyrics-prompt-text').value;
+            
+            // 順序調整：歌名 -> 歌詞 -> 風格標籤
+            // 使用完全不發音的星號符號與多重換行進行簡單隔離，不加入任何語音引擎可能誤讀的中英文備註
+            const combined = `${title}\n\n***\n\n${lyrics}\n\n***\n\n${style}`;
+            
+            executeCopyAction(combined, 'copy-all-btn', '成功複製風格與歌詞！');
+        }
+
+        // 獨立變換歌詞功能 (同樣限制字數與韻律保持穩定，防止旋律跑掉)
+        async function modifyLyrics() {
+            const currentLyrics = document.getElementById('lyrics-prompt-text').value.trim();
+            const instruction = document.getElementById('lyricModifierInput').value.trim();
+
+            if (!currentLyrics) {
+                showCustomAlert("目前沒有可變換的歌詞！請先進行歌曲分析。");
+                return;
+            }
+            if (!instruction) {
+                showCustomAlert("請輸入歌詞變換指令（例如：改為古風、翻譯成英文、憂傷感）！");
+                return;
+            }
+
+            // 顯示歌詞專用載入遮罩
+            const overlay = document.getElementById('lyrics-loading-overlay');
+            if (overlay) overlay.classList.remove('hidden');
+
+            try {
+                const systemPrompt = `
+You are an expert lyricist and MiniMax (HaiLuo AI) prompt creator. Your task is to rewrite, adapt, or transform the provided lyrics based on the user's specific instruction. 
+
+CRITICAL旋律穩定指令：
+1. You MUST keep the EXACT same syllable/character count per line as the original lyrics. (每一行的字數必須與原歌詞完全相等，句型 pacing 必須完全一致)
+2. You MUST preserve all structural bracket tags (such as [Intro], [Verse 1], [Chorus], [Bridge], [Outro], etc.) exactly where they fit.
+3. You MUST maintain the same basic rhyming rules (押韻模式與句式對稱必須完全保留).
+Output ONLY the rewritten lyrics. Do not add any introductory or concluding text. This is crucial for stabilizing the generated melody flow in MiniMax.
+`;
+                const userQuery = `Original Lyrics:\n${currentLyrics}\n\nTransformation Instruction: ${instruction}`;
+
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] }
+                };
+
+                const data = await fetchWithBackoff(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!rawText) {
+                    throw new Error("未能從 AI 取得有效回應。");
+                }
+
+                // 更新歌詞顯示並清空指令框
+                document.getElementById('lyrics-prompt-text').value = rawText.trim();
+                document.getElementById('lyricModifierInput').value = "";
+                
+            } catch (err) {
+                console.error(err);
+                showCustomAlert("歌詞變換失敗，請確認網路連線。錯誤資訊: " + err.message);
+            } finally {
+                if (overlay) overlay.classList.add('hidden');
+            }
+        }
+
+        // Reusable copy executor
+        function executeCopyAction(textToCopy, buttonId, successMsg) {
+            const tempInput = document.createElement("textarea");
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+
+            // Change button text to give feedback
+            const btn = document.getElementById(buttonId);
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = `<i class="fas fa-check"></i> ${successMsg}`;
+            
+            const originalClass = btn.className;
+            if (buttonId === 'copy-all-btn') {
+                btn.className = "w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2";
+            } else {
+                btn.classList.remove('bg-gray-800', 'text-violet-300', 'text-pink-300');
+                btn.classList.add('bg-green-600', 'text-white');
+            }
+
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.className = originalClass;
+            }, 2500);
+        }
+
+        // Shortcut online helper opener (自動複製 YouTube 網址並跳轉)
+        function openOnlineConverter(url) {
+            if (globalSourceUrl) {
+                const tempInput = document.createElement("textarea");
+                tempInput.value = globalSourceUrl;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                
+                showCustomAlert("系統已為您自動複製網址！即將開啟下載頁面，您只需在下載框中貼上 (Ctrl+V) 網址即可！");
+            } else {
+                showCustomAlert("尚未分析取得 YouTube 網址，已直接為您開啟下載平台。");
+            }
+            setTimeout(() => {
+                window.open(url, '_blank');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
