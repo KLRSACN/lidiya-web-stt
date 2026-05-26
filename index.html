@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影片最後畫面擷取工具 - 專業修正版</title>
+    <!-- 使用 Tailwind CSS 構建現代化高質感 UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自訂滾動條樣式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans relative overflow-x-hidden">
+
+    <!-- 頂部自訂 Toast 通知元件 -->
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- 頂部導覽列 -->
+    <header class="border-b border-gray-800 bg-gray-900/50 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+        <div class="flex items-center space-x-3">
+            <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <div>
+                <h1 class="text-xl font-bold tracking-wide text-white">影片最後畫面擷取器</h1>
+                <p class="text-xs text-gray-400 font-medium">本地安全處理 · 支援高畫質無損匯出</p>
+            </div>
+        </div>
+        <div class="text-xs text-gray-500 bg-gray-800/80 px-3 py-1.5 rounded-full border border-gray-700/50 hidden sm:block">
+            支援 MP4, WebM, Ogg 及多數行動裝置錄製格式
+        </div>
+    </header>
+
+    <!-- 主內容區 -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col justify-center items-center">
+        
+        <!-- 步驟一：尚未上傳影片時顯示的拖放區 -->
+        <div id="drop-zone" class="w-full max-w-3xl border-2 border-dashed border-gray-700 hover:border-indigo-500/80 bg-gray-900/40 hover:bg-gray-900/60 rounded-2xl p-10 md:p-16 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center text-center group">
+            <input type="file" id="file-input" accept="video/*" class="hidden">
+            
+            <div class="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-500/20 transition-all duration-300 mb-6">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+            </div>
+            
+            <h3 class="text-xl font-semibold text-white mb-2">拖曳影片檔案到這裡</h3>
+            <p class="text-gray-400 text-sm mb-6 max-w-md">或者點擊此區域從電腦中選取影片檔案。影片僅在瀏覽器內處理，不會上傳到任何伺服器。</p>
+            
+            <button class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition shadow-lg shadow-indigo-600/20 group-hover:shadow-indigo-500/30">
+                選擇影片檔案
+            </button>
+        </div>
+
+        <!-- 步驟二：載入中狀態 -->
+        <div id="loading-spinner" class="hidden flex-col items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+            <p class="text-gray-400">正在解析影片影格，請稍候...</p>
+        </div>
+
+        <!-- 步驟三：影片載入後的編輯與擷取面板 -->
+        <div id="editor-panel" class="hidden w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- 左側：影片播放器與微調控制 (佔 5 格/12) -->
+            <div class="lg:col-span-5 bg-gray-900/60 border border-gray-800 rounded-2xl p-5 space-y-6">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                    <span class="text-sm font-semibold text-indigo-400 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                        原始影片播放器
+                    </span>
+                    <button id="btn-re-upload" class="text-xs text-gray-400 hover:text-white transition flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.283 8H18"></path>
+                        </svg>
+                        重選影片
+                    </button>
+                </div>
+                
+                <!-- 影片預覽容器 (新增 muted, playsinline 確保行動端相容) -->
+                <div class="relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center border border-gray-800">
+                    <video id="video-element" class="w-full h-full object-contain" controls muted playsinline></video>
+                </div>
+
+                <!-- 檔案資訊 -->
+                <div class="bg-gray-950/80 p-3 rounded-lg border border-gray-800/50 space-y-1">
+                    <p class="text-xs text-gray-400 truncate">檔名: <span id="info-name" class="text-gray-200 font-mono"></span></p>
+                    <p class="text-xs text-gray-400">長度: <span id="info-duration" class="text-gray-200 font-mono">-</span> | 解析度: <span id="info-resolution" class="text-gray-200 font-mono">-</span></p>
+                </div>
+
+                <!-- 精準結尾微調滑桿控制 -->
+                <div class="space-y-3 bg-gray-950/40 p-4 rounded-xl border border-gray-800">
+                    <div class="flex justify-between items-center">
+                        <label for="offset-slider" class="text-sm font-medium text-gray-200 flex items-center gap-1.5">
+                            結尾往前推微調 (秒)
+                        </label>
+                        <span id="offset-value" class="text-xs font-mono bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">0.00 秒 (最末端)</span>
+                    </div>
+                    <input type="range" id="offset-slider" min="0" max="5" step="0.05" value="0" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    <div class="flex justify-between text-[10px] text-gray-500 font-mono">
+                        <span>結尾 (0s)</span>
+                        <span>往前 2.5s</span>
+                        <span>往前 5.0s</span>
+                    </div>
+                    <p class="text-xs text-gray-400">💡 提示：若影片最後一格是全黑（淡出），可往右拖動滑桿，往前擷取 0.1 ~ 1.0 秒處的有效畫面！</p>
+                </div>
+            </div>
+
+            <!-- 右側：擷取畫面與下載選項 (佔 7 格/12) -->
+            <div class="lg:col-span-7 space-y-6">
+                <!-- 擷取結果預覽 -->
+                <div class="bg-gray-900/60 border border-gray-800 rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                        <span class="text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            擷取畫面預覽 (當前定位)
+                        </span>
+                        <span id="capture-time-indicator" class="text-xs font-mono text-gray-400">目前定位: --:--:--</span>
+                    </div>
+
+                    <!-- 擷取畫面顯示容器 -->
+                    <div class="relative bg-black rounded-lg overflow-hidden border border-gray-800 group shadow-2xl min-h-[250px] flex items-center justify-center">
+                        <!-- 預設等候預覽 Placeholder (完美解決損壞圖示問題) -->
+                        <div id="capture-placeholder" class="text-center p-8 space-y-3">
+                            <div class="w-12 h-12 bg-gray-800/80 rounded-full flex items-center justify-center text-gray-500 mx-auto animate-pulse">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <p class="text-sm text-gray-500 font-medium">讀取影格中，請調整上方滑桿...</p>
+                        </div>
+
+                        <!-- 實際圖片 -->
+                        <img id="captured-img" class="w-full h-auto max-h-[500px] object-contain mx-auto hidden" alt="擷取畫面">
+                        
+                        <div id="refresh-badge" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none hidden">
+                            <span class="text-xs text-gray-200 bg-gray-900/90 px-3 py-1.5 rounded-lg border border-gray-700/80 tracking-wide">已即時同步更新</span>
+                        </div>
+                    </div>
+
+                    <!-- 操作與下載區 -->
+                    <div class="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <!-- 格式與品質設定 -->
+                        <div class="bg-gray-950/50 p-4 rounded-xl border border-gray-800 space-y-3">
+                            <h4 class="text-xs font-semibold text-gray-400 tracking-wider uppercase">匯出格式設定</h4>
+                            
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="btn-format-png" class="px-3 py-2 text-xs font-semibold rounded-lg border transition duration-200">
+                                    PNG (高畫質無損)
+                                </button>
+                                <button id="btn-format-jpeg" class="px-3 py-2 text-xs font-semibold rounded-lg border transition duration-200">
+                                    JPEG (壓縮小檔案)
+                                </button>
+                            </div>
+
+                            <!-- 僅在選擇 JPEG 時顯示的品質滑桿 -->
+                            <div id="jpg-quality-box" class="space-y-1.5 hidden pt-1">
+                                <div class="flex justify-between text-[11px] text-gray-400">
+                                    <span>JPEG 品質</span>
+                                    <span id="jpg-quality-value">90%</span>
+                                </div>
+                                <input type="range" id="jpg-quality" min="10" max="100" value="90" class="w-full h-1 bg-gray-800 rounded appearance-none accent-indigo-500">
+                            </div>
+                        </div>
+
+                        <!-- 儲存操作區 -->
+                        <div class="flex flex-col justify-between gap-3">
+                            <div class="text-xs text-gray-400 space-y-1.5">
+                                <p class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    解析度：<span id="out-resolution" class="font-mono text-gray-300">與原影片同寬高</span>
+                                </p>
+                                <p class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    品質：<span id="quality-desc" class="text-gray-300">無壓縮失真 (PNG)</span>
+                                </p>
+                            </div>
+                            
+                            <button id="btn-download" class="w-full py-3 px-6 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-lg shadow-emerald-900/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                儲存擷取圖片
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- 用於背景擷取繪製的隱藏 Canvas 畫布 -->
+    <canvas id="capture-canvas" class="hidden"></canvas>
+
+    <!-- 底部資訊與提示 -->
+    <footer class="border-t border-gray-900 bg-gray-950 py-4 text-center text-xs text-gray-500 mt-auto">
+        使用 HTML5 Canvas & Blob 技術 · 本地硬體解碼加速 · 100% 隱私安全保護
+    </footer>
+
+    <!-- JavaScript 互動程式邏輯 -->
+    <script>
+        // DOM 元素選取
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const editorPanel = document.getElementById('editor-panel');
+        
+        const videoElement = document.getElementById('video-element');
+        const captureCanvas = document.getElementById('capture-canvas');
+        const capturedImg = document.getElementById('captured-img');
+        const capturePlaceholder = document.getElementById('capture-placeholder');
+        const refreshBadge = document.getElementById('refresh-badge');
+        
+        // 資訊與控制元素
+        const infoName = document.getElementById('info-name');
+        const infoDuration = document.getElementById('info-duration');
+        const infoResolution = document.getElementById('info-resolution');
+        const outResolution = document.getElementById('out-resolution');
+        const captureTimeIndicator = document.getElementById('capture-time-indicator');
+        
+        const offsetSlider = document.getElementById('offset-slider');
+        const offsetValue = document.getElementById('offset-value');
+        
+        const btnReUpload = document.getElementById('btn-re-upload');
+        const btnDownload = document.getElementById('btn-download');
+        
+        // 格式與品質設定
+        const btnFormatPng = document.getElementById('btn-format-png');
+        const btnFormatJpeg = document.getElementById('btn-format-jpeg');
+        const jpgQualityBox = document.getElementById('jpg-quality-box');
+        const jpgQualitySlider = document.getElementById('jpg-quality');
+        const jpgQualityValue = document.getElementById('jpg-quality-value');
+        const qualityDesc = document.getElementById('quality-desc');
+
+        // 應用程式狀態變數
+        let videoFile = null;
+        let videoUrl = null;
+        let exportFormat = 'image/png'; // 預設 PNG
+        let jpegQuality = 0.9;         // 預設 JPEG 品質 90%
+
+        // 初始化格式按鈕樣式 (預設選擇 PNG)
+        function updateFormatUI() {
+            if (exportFormat === 'image/png') {
+                btnFormatPng.className = "px-3 py-2 text-xs font-semibold rounded-lg border transition duration-200 border-indigo-500 bg-indigo-500/10 text-indigo-300 shadow-md shadow-indigo-500/5";
+                btnFormatJpeg.className = "px-3 py-2 text-xs font-semibold rounded-lg border border-gray-800 bg-gray-900 text-gray-400 hover:border-gray-700 transition duration-200";
+                jpgQualityBox.classList.add('hidden');
+                qualityDesc.textContent = "無壓縮失真 (PNG)";
+            } else {
+                btnFormatJpeg.className = "px-3 py-2 text-xs font-semibold rounded-lg border transition duration-200 border-indigo-500 bg-indigo-500/10 text-indigo-300 shadow-md shadow-indigo-500/5";
+                btnFormatPng.className = "px-3 py-2 text-xs font-semibold rounded-lg border border-gray-800 bg-gray-900 text-gray-400 hover:border-gray-700 transition duration-200";
+                jpgQualityBox.classList.remove('hidden');
+                qualityDesc.textContent = `壓縮後品質約為 ${Math.round(jpegQuality * 100)}% (JPG)`;
+            }
+        }
+        updateFormatUI(); // 首次載入初始化
+
+        // 彈出通知提示框
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-emerald-100' : 'bg-rose-900/90 border-rose-500 text-rose-100';
+            const icon = type === 'success' ? 
+                `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>` : 
+                `<svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+            toast.className = `flex items-center gap-2 px-4 py-3 rounded-xl border ${bgColor} shadow-lg backdrop-blur transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto max-w-sm`;
+            toast.innerHTML = `${icon} <span class="text-xs font-medium">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // 進場動畫
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            // 3秒後退場
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-8px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 1. 拖放 (Drag and Drop) 與點擊事件綁定
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-indigo-500', 'bg-gray-900/80');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-indigo-500', 'bg-gray-900/80');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-500', 'bg-gray-900/80');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('video/')) {
+                handleVideoSelection(files[0]);
+            } else {
+                showNotification("不支援的檔案格式，請上傳影片檔案！", "error");
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleVideoSelection(e.target.files[0]);
+            }
+        });
+
+        // 重選影片
+        btnReUpload.addEventListener('click', () => {
+            if (videoUrl) {
+                URL.revokeObjectURL(videoUrl);
+            }
+            videoElement.src = '';
+            capturedImg.src = '';
+            capturedImg.classList.add('hidden');
+            capturePlaceholder.classList.remove('hidden');
+            refreshBadge.classList.add('hidden');
+            
+            editorPanel.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+            fileInput.value = '';
+            offsetSlider.value = 0;
+            updateOffsetDisplay(0);
+            showNotification("已清除影片，請重新選擇", "success");
+        });
+
+        // 2. 處理載入影片
+        function handleVideoSelection(file) {
+            videoFile = file;
+            videoUrl = URL.createObjectURL(file);
+            
+            dropZone.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+
+            infoName.textContent = file.name;
+
+            // 預載入與靜音，確保相容所有瀏覽器
+            videoElement.preload = "auto";
+            videoElement.src = videoUrl;
+            videoElement.load();
+        }
+
+        // 影片中繼資料載入完成 (長度、解析度等)
+        videoElement.addEventListener('loadedmetadata', () => {
+            loadingSpinner.classList.add('hidden');
+            editorPanel.classList.remove('hidden');
+
+            const duration = videoElement.duration;
+            infoDuration.textContent = formatTime(duration);
+            infoResolution.textContent = `${videoElement.videoWidth} × ${videoElement.videoHeight}`;
+            outResolution.textContent = `${videoElement.videoWidth} × ${videoElement.videoHeight} 像素`;
+
+            // 設定微調滑桿最大範圍
+            const maxOffset = Math.min(5, duration);
+            offsetSlider.max = maxOffset;
+            offsetSlider.value = 0;
+            updateOffsetDisplay(0);
+
+            // 自動跳轉定位至最後畫面
+            seekToTarget();
+        });
+
+        // 載入失敗處理
+        videoElement.addEventListener('error', (e) => {
+            loadingSpinner.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+            showNotification("影片解碼失敗！瀏覽器不支援此格式，建議轉成 .mp4 再試一次。", "error");
+        });
+
+        // 格式化時間 (HH:MM:SS.xxx)
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "00:00:00.00";
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 100);
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+        }
+
+        // 3. 微調控制事件
+        offsetSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            updateOffsetDisplay(val);
+            seekToTarget();
+        });
+
+        function updateOffsetDisplay(val) {
+            if (val === 0) {
+                offsetValue.textContent = "0.00 秒 (最末端)";
+            } else {
+                offsetValue.textContent = `倒數 ${val.toFixed(2)} 秒`;
+            }
+        }
+
+        // 執行定位跳轉
+        function seekToTarget() {
+            if (!videoElement.duration) return;
+            const offset = parseFloat(offsetSlider.value);
+            // 保留 0.015s 餘度防指某些瀏覽器（如 Firefox/Safari）跳轉到終點時出錯
+            let targetTime = videoElement.duration - offset;
+            if (targetTime < 0) targetTime = 0;
+            if (targetTime > videoElement.duration - 0.015) targetTime = videoElement.duration - 0.015;
+
+            videoElement.currentTime = targetTime;
+            captureTimeIndicator.textContent = `目前定位: ${formatTime(targetTime)}`;
+        }
+
+        // 4. 當影片跳轉定位完畢 (seeked)，進行 Canvas 繪圖擷取
+        videoElement.addEventListener('seeked', () => {
+            generateFrameCapture();
+        });
+
+        function generateFrameCapture() {
+            const width = videoElement.videoWidth;
+            const height = videoElement.videoHeight;
+            
+            if (!width || !height) return;
+
+            // 調整畫布尺寸與原影片等寬高
+            captureCanvas.width = width;
+            captureCanvas.height = height;
+
+            const ctx = captureCanvas.getContext('2d');
+            
+            try {
+                // 將影片當前畫面渲染到畫布上
+                ctx.drawImage(videoElement, 0, 0, width, height);
+
+                // 將畫布轉為預覽 Base64（僅供顯示，真正的下載會透過 Blob 處理，防檔案壞掉）
+                const dataUrl = captureCanvas.toDataURL(exportFormat, jpegQuality);
+                
+                // 顯示圖片，隱藏 placeholder
+                capturePlaceholder.classList.add('hidden');
+                capturedImg.src = dataUrl;
+                capturedImg.classList.remove('hidden');
+                refreshBadge.classList.remove('hidden');
+            } catch (err) {
+                console.error("Canvas draw failed:", err);
+                showNotification("擷取畫面失敗，部分瀏覽器不支援本格式的本地繪製。", "error");
+            }
+        }
+
+        // 5. 匯出格式與品質切換
+        btnFormatPng.addEventListener('click', () => {
+            exportFormat = 'image/png';
+            updateFormatUI();
+            generateFrameCapture();
+            showNotification("已切換為 PNG 高畫質無損格式", "success");
+        });
+
+        btnFormatJpeg.addEventListener('click', () => {
+            exportFormat = 'image/jpeg';
+            updateFormatUI();
+            generateFrameCapture();
+            showNotification("已切換為 JPEG 壓縮小檔案格式", "success");
+        });
+
+        jpgQualitySlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            jpgQualityValue.textContent = `${val}%`;
+            jpegQuality = val / 100;
+            updateFormatUI();
+            generateFrameCapture(); // 即時重新繪製高品質
+        });
+
+        // 6. 點擊下載擷取到的畫面 (改用 Blob 物件下載，100% 防止檔案壞掉無法判讀)
+        btnDownload.addEventListener('click', () => {
+            if (!videoElement.duration || !captureCanvas.width) {
+                showNotification("尚未準備好圖片，請先上傳影片！", "error");
+                return;
+            }
+
+            const ext = exportFormat === 'image/png' ? 'png' : 'jpg';
+            const mimeType = exportFormat;
+            
+            // 轉成 Blob 下載（最安全的二進位機制，解決大檔案崩潰問題）
+            captureCanvas.toBlob((blob) => {
+                if (!blob) {
+                    showNotification("產生圖片失敗，請嘗試微調滑桿！", "error");
+                    return;
+                }
+
+                const url = URL.createObjectURL(blob);
+                
+                // 檔名設定
+                const baseName = videoFile ? videoFile.name.substring(0, videoFile.name.lastIndexOf('.')) : 'video';
+                const offset = parseFloat(offsetSlider.value);
+                const suffix = offset === 0 ? '_last_frame' : `_minus_${offset.toFixed(2)}s`;
+                const fileName = `${baseName}${suffix}.${ext}`;
+
+                // 建立虛擬下載點
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // 延時釋放記憶體
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                showNotification("圖片儲存成功！檔案已無損下載。", "success");
+            }, mimeType, exportFormat === 'image/jpeg' ? jpegQuality : undefined);
+        });
+    </script>
+</body>
+</html>
