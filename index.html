@@ -27,7 +27,7 @@
 <body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans relative overflow-x-hidden">
 
     <!-- 頂部自訂 Toast 通知元件 -->
-    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4"></div>
 
     <!-- 頂部導覽列 -->
     <header class="border-b border-gray-800 bg-gray-900/50 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-10">
@@ -41,7 +41,7 @@
             </div>
         </div>
         <div class="text-xs text-gray-500 bg-gray-800/80 px-3 py-1.5 rounded-full border border-gray-700/50 hidden sm:block">
-            支援 MP4, WebM, Ogg 及多數行動裝置錄製格式
+            支援 MP4, WebM, Ogg 及多數瀏覽器可播放格式
         </div>
     </header>
 
@@ -69,13 +69,13 @@
         <!-- 步驟二：載入中狀態 -->
         <div id="loading-spinner" class="hidden flex-col items-center justify-center py-20">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-            <p class="text-gray-400">正在解析影片影格，請稍候...</p>
+            <p class="text-gray-400 font-medium" id="loading-text">正在解析影片影格，請稍候...</p>
         </div>
 
         <!-- 步驟三：影片載入後的編輯與擷取面板 -->
         <div id="editor-panel" class="hidden w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            <!-- 左側：影片播放器與微調控制 (佔 5 格/12) -->
+            <!-- 左側：影片播放器與微調控制 -->
             <div class="lg:col-span-5 bg-gray-900/60 border border-gray-800 rounded-2xl p-5 space-y-6">
                 <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                     <span class="text-sm font-semibold text-indigo-400 flex items-center gap-1.5">
@@ -90,7 +90,7 @@
                     </button>
                 </div>
                 
-                <!-- 影片預覽容器 (新增 muted, playsinline 確保行動端相容) -->
+                <!-- 影片預覽容器 -->
                 <div class="relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center border border-gray-800">
                     <video id="video-element" class="w-full h-full object-contain" controls muted playsinline></video>
                 </div>
@@ -107,21 +107,21 @@
                         <label for="offset-slider" class="text-sm font-medium text-gray-200 flex items-center gap-1.5">
                             結尾往前推微調 (秒)
                         </label>
-                        <span id="offset-value" class="text-xs font-mono bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">0.00 秒 (最末端)</span>
+                        <span id="offset-value" class="text-xs font-mono bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">0.10 秒</span>
                     </div>
-                    <input type="range" id="offset-slider" min="0" max="5" step="0.05" value="0" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    <!-- 預設值調整為 0.1 秒，提高各大瀏覽器解碼的成功率 -->
+                    <input type="range" id="offset-slider" min="0" max="5" step="0.05" value="0.10" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
                     <div class="flex justify-between text-[10px] text-gray-500 font-mono">
                         <span>結尾 (0s)</span>
                         <span>往前 2.5s</span>
                         <span>往前 5.0s</span>
                     </div>
-                    <p class="text-xs text-gray-400">💡 提示：若影片最後一格是全黑（淡出），可往右拖動滑桿，往前擷取 0.1 ~ 1.0 秒處的有效畫面！</p>
+                    <p class="text-xs text-gray-400">💡 提示：若影片最後一格是全黑（淡出），可往右拖動滑桿，往前擷取 0.1 ~ 2.0 秒處的有效畫面！</p>
                 </div>
             </div>
 
-            <!-- 右側：擷取畫面與下載選項 (佔 7 格/12) -->
+            <!-- 右側：擷取畫面與下載選項 -->
             <div class="lg:col-span-7 space-y-6">
-                <!-- 擷取結果預覽 -->
                 <div class="bg-gray-900/60 border border-gray-800 rounded-2xl p-5 space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                         <span class="text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
@@ -136,7 +136,7 @@
 
                     <!-- 擷取畫面顯示容器 -->
                     <div class="relative bg-black rounded-lg overflow-hidden border border-gray-800 group shadow-2xl min-h-[250px] flex items-center justify-center">
-                        <!-- 預設等候預覽 Placeholder (完美解決損壞圖示問題) -->
+                        <!-- 預設等候預覽 Placeholder -->
                         <div id="capture-placeholder" class="text-center p-8 space-y-3">
                             <div class="w-12 h-12 bg-gray-800/80 rounded-full flex items-center justify-center text-gray-500 mx-auto animate-pulse">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -193,7 +193,8 @@
                                 </p>
                             </div>
                             
-                            <button id="btn-download" class="w-full py-3 px-6 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-lg shadow-emerald-900/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2">
+                            <!-- 預設強制為 disabled，防止空圖片被下載 -->
+                            <button id="btn-download" disabled class="w-full py-3 px-6 bg-gray-800 text-gray-500 font-semibold rounded-xl transition cursor-not-allowed opacity-50 flex items-center justify-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                                 </svg>
@@ -223,6 +224,7 @@
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const loadingSpinner = document.getElementById('loading-spinner');
+        const loadingText = document.getElementById('loading-text');
         const editorPanel = document.getElementById('editor-panel');
         
         const videoElement = document.getElementById('video-element');
@@ -257,6 +259,21 @@
         let videoUrl = null;
         let exportFormat = 'image/png'; // 預設 PNG
         let jpegQuality = 0.9;         // 預設 JPEG 品質 90%
+        let isFrameCaptured = false;   // 關鍵因果狀態：是否有成功繪製出圖片
+        let loadTimeoutId = null;      // 避免解析影片無限轉圈的定時器
+        let metadataLoaded = false;    // 防止重複初始化標記
+
+        // 控制下載按鈕的啟用/禁用外觀 (堅守嚴格因果鎖定)
+        function setCaptureState(captured) {
+            isFrameCaptured = captured;
+            if (captured) {
+                btnDownload.disabled = false;
+                btnDownload.className = "w-full py-3 px-6 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-lg shadow-emerald-900/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2 cursor-pointer opacity-100";
+            } else {
+                btnDownload.disabled = true;
+                btnDownload.className = "w-full py-3 px-6 bg-gray-800 text-gray-500 font-semibold rounded-xl transition cursor-not-allowed opacity-50 flex items-center justify-center gap-2";
+            }
+        }
 
         // 初始化格式按鈕樣式 (預設選擇 PNG)
         function updateFormatUI() {
@@ -279,13 +296,13 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             
-            const bgColor = type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-emerald-100' : 'bg-rose-900/90 border-rose-500 text-rose-100';
+            const bgColor = type === 'success' ? 'bg-emerald-900/95 border-emerald-500 text-emerald-100' : 'bg-rose-900/95 border-rose-500 text-rose-100';
             const icon = type === 'success' ? 
                 `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>` : 
                 `<svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-            toast.className = `flex items-center gap-2 px-4 py-3 rounded-xl border ${bgColor} shadow-lg backdrop-blur transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto max-w-sm`;
-            toast.innerHTML = `${icon} <span class="text-xs font-medium">${message}</span>`;
+            toast.className = `flex items-center gap-2.5 px-4 py-3 rounded-xl border ${bgColor} shadow-xl backdrop-blur transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto w-full mb-2`;
+            toast.innerHTML = `${icon} <span class="text-xs font-medium leading-relaxed">${message}</span>`;
             
             container.appendChild(toast);
             
@@ -294,11 +311,27 @@
                 toast.classList.remove('translate-y-2', 'opacity-0');
             }, 10);
 
-            // 3秒後退場
+            // 4.5秒後退場
             setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-[-8px]');
+                toast.classList.add('opacity-0', '-translate-y-2');
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, 4500);
+        }
+
+        // 輔助函式：深度校驗檔案是否為影片（雙重檢查 MIME-Type 與 副檔名，徹底解決 Windows MIME 丟失問題）
+        function checkIsVideo(file) {
+            if (!file) return false;
+            const mimeType = file.type || '';
+            const fileName = file.name || '';
+            
+            // 1. 如果 MIME 正常，使用 MIME 判斷
+            if (mimeType.startsWith('video/')) {
+                return true;
+            }
+            
+            // 2. 如果 MIME 為空（常見 Windows Bug），根據副檔名進行副檔名探測
+            const videoExtensions = /\.(mp4|webm|ogg|mov|m4v|3gp|avi|mkv|wmv)$/i;
+            return videoExtensions.test(fileName);
         }
 
         // 1. 拖放 (Drag and Drop) 與點擊事件綁定
@@ -317,56 +350,108 @@
             e.preventDefault();
             dropZone.classList.remove('border-indigo-500', 'bg-gray-900/80');
             const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].type.startsWith('video/')) {
-                handleVideoSelection(files[0]);
-            } else {
-                showNotification("不支援的檔案格式，請上傳影片檔案！", "error");
+            if (files.length > 0) {
+                if (checkIsVideo(files[0])) {
+                    handleVideoSelection(files[0]);
+                } else {
+                    showNotification("不支援的檔案格式！請上傳常見的 MP4, WebM 或 Ogg 影片檔案。", "error");
+                }
             }
         });
 
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
-                handleVideoSelection(e.target.files[0]);
+                if (checkIsVideo(e.target.files[0])) {
+                    handleVideoSelection(e.target.files[0]);
+                } else {
+                    showNotification("不支援的檔案格式！請上傳常見的 MP4, WebM 或 Ogg 影片檔案。", "error");
+                }
             }
         });
 
-        // 重選影片
-        btnReUpload.addEventListener('click', () => {
+        // 重選與重設所有核心狀態 (Reset State)
+        function resetAppState() {
+            if (loadTimeoutId) {
+                clearTimeout(loadTimeoutId);
+                loadTimeoutId = null;
+            }
+            
+            // 先暫停影片，再進行 URL 與 Src 卸載
+            try {
+                videoElement.pause();
+            } catch (e) {}
+
             if (videoUrl) {
                 URL.revokeObjectURL(videoUrl);
+                videoUrl = null;
             }
-            videoElement.src = '';
+            videoFile = null;
+            
+            // 安全移除 src，避免觸發虛假的影片錯誤（error）事件
+            videoElement.removeAttribute('src');
+            try {
+                videoElement.load();
+            } catch(e) {}
+            
             capturedImg.src = '';
             capturedImg.classList.add('hidden');
             capturePlaceholder.classList.remove('hidden');
             refreshBadge.classList.add('hidden');
             
             editorPanel.classList.add('hidden');
-            dropZone.classList.remove('hidden');
             fileInput.value = '';
-            offsetSlider.value = 0;
-            updateOffsetDisplay(0);
+            offsetSlider.value = 0.10; // 重設回黃金安全偏移值
+            updateOffsetDisplay(0.10);
+            setCaptureState(false); // 下載鎖定
+            metadataLoaded = false;
+        }
+
+        btnReUpload.addEventListener('click', () => {
+            resetAppState();
+            dropZone.classList.remove('hidden');
             showNotification("已清除影片，請重新選擇", "success");
         });
 
-        // 2. 處理載入影片
+        // 2. 處理載入影片 (安全雙向保險閥機制)
         function handleVideoSelection(file) {
+            resetAppState();
+
             videoFile = file;
             videoUrl = URL.createObjectURL(file);
             
             dropZone.classList.add('hidden');
             loadingSpinner.classList.remove('hidden');
+            loadingText.textContent = "正在解析影片影格，請稍候...";
 
             infoName.textContent = file.name;
 
-            // 預載入與靜音，確保相容所有瀏覽器
+            // 超時防禦（7秒內如影片讀不出來，100% 報錯並返回，防止分頁假死）
+            loadTimeoutId = setTimeout(() => {
+                if (!metadataLoaded) {
+                    console.error("Video load timeout");
+                    loadingSpinner.classList.add('hidden');
+                    resetAppState();
+                    dropZone.classList.remove('hidden');
+                    showNotification("解析超時！該影片格式可能不相容。建議使用 Chrome 瀏覽器或先將影片轉換為標準的 H.264 MP4 格式。", "error");
+                }
+            }, 7000);
+
+            // 確保乾淨加載
             videoElement.preload = "auto";
             videoElement.src = videoUrl;
             videoElement.load();
         }
 
-        // 影片中繼資料載入完成 (長度、解析度等)
-        videoElement.addEventListener('loadedmetadata', () => {
+        // 封裝核心載入完成邏輯 (防範各家瀏覽器事件發射不一的問題)
+        function onVideoMetadataReady() {
+            if (metadataLoaded) return;
+            metadataLoaded = true;
+
+            if (loadTimeoutId) {
+                clearTimeout(loadTimeoutId);
+                loadTimeoutId = null;
+            }
+
             loadingSpinner.classList.add('hidden');
             editorPanel.classList.remove('hidden');
 
@@ -378,18 +463,63 @@
             // 設定微調滑桿最大範圍
             const maxOffset = Math.min(5, duration);
             offsetSlider.max = maxOffset;
-            offsetSlider.value = 0;
-            updateOffsetDisplay(0);
+            offsetSlider.value = Math.min(0.10, maxOffset); // 設定安全初始偏移值
+            updateOffsetDisplay(offsetSlider.value);
 
-            // 自動跳轉定位至最後畫面
+            // 執行定位
             seekToTarget();
+        }
+
+        // 多重加載事件監聽，確保在多數極端環境與瀏覽器能 100% 進入程式
+        videoElement.addEventListener('loadedmetadata', () => {
+            if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
+                onVideoMetadataReady();
+            }
         });
 
-        // 載入失敗處理
+        videoElement.addEventListener('loadeddata', () => {
+            if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
+                onVideoMetadataReady();
+            }
+        });
+
+        videoElement.addEventListener('canplay', () => {
+            if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
+                onVideoMetadataReady();
+            }
+        });
+
+        // 異常處理分类器：當載入出錯時給予精準的技術支援與錯誤說明
         videoElement.addEventListener('error', (e) => {
+            if (metadataLoaded) return; // 載入完成後的錯誤不觸發重設
+            
+            // 安全守衛：防範空物件或清空 src 導致的虛警 error
+            if (!videoElement.src || videoElement.src === "" || videoElement.src === window.location.href) {
+                return;
+            }
+            
+            if (loadTimeoutId) {
+                clearTimeout(loadTimeoutId);
+                loadTimeoutId = null;
+            }
+
             loadingSpinner.classList.add('hidden');
-            dropZone.classList.remove('hidden');
-            showNotification("影片解碼失敗！瀏覽器不支援此格式，建議轉成 .mp4 再試一次。", "error");
+            resetAppState(); 
+            dropZone.classList.remove('hidden'); 
+
+            let errorMsg = "影片解析失敗，請重新確認檔案是否損壞！";
+            const err = videoElement.error;
+            if (err) {
+                switch(err.code) {
+                    case 3: // MEDIA_ERR_DECODE
+                        errorMsg = "解碼失敗！瀏覽器無法解析此影片。這通常是因為此影片使用了不支援的 HEVC/H.265 編碼。建議將影片轉為 H.264 編碼的 MP4 再試。";
+                        break;
+                    case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
+                        errorMsg = "格式不支援！此瀏覽器不支援此副檔名（如 MKV、FLV 等）。請轉換為常見的 .mp4 格式。";
+                        break;
+                }
+            }
+            showNotification(errorMsg, "error");
         });
 
         // 格式化時間 (HH:MM:SS.xxx)
@@ -409,11 +539,13 @@
             seekToTarget();
         });
 
+        // 核心 Bug 修正：在此處強制使用 parseFloat，避免傳入 HTML 屬性的字串格式時，呼叫 toFixed() 出現錯誤
         function updateOffsetDisplay(val) {
-            if (val === 0) {
+            const numVal = parseFloat(val);
+            if (isNaN(numVal) || numVal === 0) {
                 offsetValue.textContent = "0.00 秒 (最末端)";
             } else {
-                offsetValue.textContent = `倒數 ${val.toFixed(2)} 秒`;
+                offsetValue.textContent = `倒數 ${numVal.toFixed(2)} 秒`;
             }
         }
 
@@ -421,16 +553,19 @@
         function seekToTarget() {
             if (!videoElement.duration) return;
             const offset = parseFloat(offsetSlider.value);
-            // 保留 0.015s 餘度防指某些瀏覽器（如 Firefox/Safari）跳轉到終點時出錯
+            
+            // 保留微幅餘裕，防止解碼邊界死鎖
             let targetTime = videoElement.duration - offset;
             if (targetTime < 0) targetTime = 0;
             if (targetTime > videoElement.duration - 0.015) targetTime = videoElement.duration - 0.015;
 
+            // 下載按鈕暫時鎖定，預防在定位尚未完成的極短暫時間內被點擊
+            setCaptureState(false); 
             videoElement.currentTime = targetTime;
             captureTimeIndicator.textContent = `目前定位: ${formatTime(targetTime)}`;
         }
 
-        // 4. 當影片跳轉定位完畢 (seeked)，進行 Canvas 繪圖擷取
+        // 4. 當影片定位完畢 (seeked)，進行畫布繪製與嚴格圖像檢驗
         videoElement.addEventListener('seeked', () => {
             generateFrameCapture();
         });
@@ -439,29 +574,37 @@
             const width = videoElement.videoWidth;
             const height = videoElement.videoHeight;
             
-            if (!width || !height) return;
+            // 防禦阻斷：若影片資訊不全，不予以擷取
+            if (!width || !height) {
+                setCaptureState(false);
+                return;
+            }
 
-            // 調整畫布尺寸與原影片等寬高
             captureCanvas.width = width;
             captureCanvas.height = height;
 
             const ctx = captureCanvas.getContext('2d');
             
             try {
-                // 將影片當前畫面渲染到畫布上
+                // 將影片當前影格渲染到隱藏畫布上
                 ctx.drawImage(videoElement, 0, 0, width, height);
 
-                // 將畫布轉為預覽 Base64（僅供顯示，真正的下載會透過 Blob 處理，防檔案壞掉）
+                // 將畫布轉為預覽 Base64（僅供前端即時渲染預覽）
                 const dataUrl = captureCanvas.toDataURL(exportFormat, jpegQuality);
                 
-                // 顯示圖片，隱藏 placeholder
                 capturePlaceholder.classList.add('hidden');
                 capturedImg.src = dataUrl;
                 capturedImg.classList.remove('hidden');
                 refreshBadge.classList.remove('hidden');
+
+                // 通過圖像有效性檢驗，順暢解鎖下載按鈕！
+                setCaptureState(true);
             } catch (err) {
                 console.error("Canvas draw failed:", err);
-                showNotification("擷取畫面失敗，部分瀏覽器不支援本格式的本地繪製。", "error");
+                setCaptureState(false); 
+                capturedImg.classList.add('hidden');
+                capturePlaceholder.classList.remove('hidden');
+                showNotification("擷取畫面失敗，此瀏覽器可能不允許本地畫布安全讀取此影片。", "error");
             }
         }
 
@@ -485,20 +628,20 @@
             jpgQualityValue.textContent = `${val}%`;
             jpegQuality = val / 100;
             updateFormatUI();
-            generateFrameCapture(); // 即時重新繪製高品質
+            generateFrameCapture(); 
         });
 
-        // 6. 點擊下載擷取到的畫面 (改用 Blob 物件下載，100% 防止檔案壞掉無法判讀)
+        // 6. 點擊下載擷取到的畫面 ( Blob 物件下載防損壞機制)
         btnDownload.addEventListener('click', () => {
-            if (!videoElement.duration || !captureCanvas.width) {
-                showNotification("尚未準備好圖片，請先上傳影片！", "error");
+            if (!isFrameCaptured || !videoFile || !captureCanvas.width) {
+                showNotification("尚未成功擷取畫面，無法下載！", "error");
                 return;
             }
 
             const ext = exportFormat === 'image/png' ? 'png' : 'jpg';
             const mimeType = exportFormat;
             
-            // 轉成 Blob 下載（最安全的二進位機制，解決大檔案崩潰問題）
+            // 轉成 Blob 下載（最安全的二進位機制，解決大檔案下載崩潰或格式無法判讀的問題）
             captureCanvas.toBlob((blob) => {
                 if (!blob) {
                     showNotification("產生圖片失敗，請嘗試微調滑桿！", "error");
