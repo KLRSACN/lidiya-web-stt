@@ -9,7 +9,7 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Noto Sans TC', sans-serif;
@@ -250,182 +250,27 @@
                 </div>
             </div>
 
-            <!-- Tab 2 Content: Downloader Tool & Guide -->
-            <div id="downloader-tab-content" class="hidden lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Left Column: Guide and Online Alternatives -->
-                <div class="lg:col-span-5 space-y-6">
-                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                        <h3 class="text-md font-bold text-violet-400 mb-3 flex items-center gap-2">
-                            <i class="fas fa-shield-halved"></i> 本地下載與免安裝線上捷徑
-                        </h3>
-                        <p class="text-sm text-gray-300 leading-relaxed mb-4">
-                            當您在第一步進行「歌曲分析」後，系統會自動在背景取得該歌曲的 <b>YouTube 影片連結</b>。 
-                            您可以選擇直接點擊下方按鈕，在新分頁中直接下載（會自動為您複製好 YouTube 網址，非常方便！）。
-                        </p>
-                        <div class="bg-gray-950 p-4 rounded-xl border border-gray-800 space-y-3 text-xs mb-4">
-                            <div class="flex items-start gap-2">
-                                <span class="bg-violet-600/30 text-violet-400 px-1.5 py-0.5 rounded font-bold">極速 1</span>
-                                <p class="text-gray-400">分析完成後，系統會自動複製找到的音樂網址，您只需直接跳轉貼上。</p>
-                            </div>
-                            <div class="flex items-start gap-2">
-                                <span class="bg-pink-600/30 text-pink-400 px-1.5 py-0.5 rounded font-bold">極速 2</span>
-                                <p class="text-gray-400">免去您自己上 YouTube 搜尋、複製網址的繁瑣步驟！</p>
-                            </div>
+            <!-- Tab 2: Online Downloader UI -->
+            <div id="downloader-tab-content" class="hidden lg:col-span-12 max-w-3xl mx-auto w-full">
+                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-8 glow-effect">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-gradient-to-tr from-violet-600 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-cloud-arrow-down text-white text-2xl"></i>
                         </div>
+                        <h2 class="text-2xl font-bold text-white">一鍵免安裝線上轉換捷徑</h2>
+                        <p class="text-sm text-gray-400 mt-2">點擊下方捷徑，系統會自動複製您分析取得的 YouTube 網址，並打開安全下載網站，貼上即可下載。</p>
                     </div>
 
-                    <!-- Online Converter Shortcuts -->
-                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                        <h3 class="text-md font-bold text-pink-400 mb-3 flex items-center gap-2">
-                            <i class="fas fa-external-link-alt"></i> 一鍵線上免安裝轉換捷徑
-                        </h3>
-                        <p class="text-xs text-gray-400 mb-4">點擊以下任一按鈕，系統會<b>自動複製當前分析的網址</b>，並為您開啟下載平台，您只需按 Paste/貼上 即可：</p>
+                    <div class="space-y-6">
                         <div class="space-y-3">
-                            <button onclick="openOnlineConverter('https://y2mate.is')" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm py-3 px-4 rounded-xl transition-all flex justify-between items-center">
-                                <span><i class="fas fa-globe text-blue-400 mr-2"></i>y2mate.is (快速好用)</span>
-                                <i class="fas fa-arrow-right text-xs"></i>
+                            <button onclick="openOnlineConverter('https://y2mate.is')" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm py-4 px-6 rounded-xl transition-all flex justify-between items-center shadow-md">
+                                <span class="font-medium text-base"><i class="fas fa-bolt text-blue-400 mr-3"></i>前往 y2mate (推薦：快速免安裝)</span>
+                                <i class="fas fa-arrow-right text-gray-400"></i>
                             </button>
-                            <button onclick="openOnlineConverter('https://320ytmp3.com')" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm py-3 px-4 rounded-xl transition-all flex justify-between items-center">
-                                <span><i class="fas fa-headphones text-pink-400 mr-2"></i>320ytmp3 (支援高品質 mp3)</span>
-                                <i class="fas fa-arrow-right text-xs"></i>
+                            <button onclick="openOnlineConverter('https://320ytmp3.com')" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm py-4 px-6 rounded-xl transition-all flex justify-between items-center shadow-md">
+                                <span class="font-medium text-base"><i class="fas fa-headphones text-pink-400 mr-3"></i>前往 320ytmp3 (推薦：高品質 MP3)</span>
+                                <i class="fas fa-arrow-right text-gray-400"></i>
                             </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column: Python Script & Instructions -->
-                <div class="lg:col-span-7 space-y-6">
-                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-md font-bold text-white flex items-center gap-2">
-                                <i class="fab fa-python text-yellow-400"></i> 本地 Python 下載器 (自動定位 & 彈出路徑版)
-                            </h3>
-                            <button id="copy-code-btn" onclick="copyPrompt('python-code-text', 'copy-code-btn')" class="text-xs bg-gray-800 hover:bg-gray-700 text-yellow-300 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1">
-                                <i class="fas fa-copy"></i> 複製原始碼
-                            </button>
-                        </div>
-                        
-                        <div class="relative">
-                            <textarea id="python-code-text" readonly class="w-full h-80 bg-gray-950 border border-gray-800 rounded-xl p-4 text-xs text-gray-300 font-mono focus:outline-none resize-y">import os
-import sys
-import subprocess
-import platform
-
-# 檢查並安裝 yt-dlp 庫
-def install_dependencies():
-    print("==================================================")
-    print("正在為您檢查並自動安裝必要下載套件 (yt-dlp)...")
-    print("==================================================")
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "yt-dlp"])
-        print("\n🎉 必要套件安裝完成！")
-    except Exception as e:
-        print(f"\n❌ 套件安裝失敗，請嘗試手動在終端機輸入: pip install yt-dlp\n錯誤訊息: {e}")
-        input("\n按下任意鍵結束...")
-        sys.exit(1)
-
-try:
-    import yt_dlp
-except ImportError:
-    install_dependencies()
-    import yt_dlp
-
-# 自動打開下載目錄
-def open_download_folder(path):
-    print(f"\n📂 下載完成！正在為您自動打開儲存資料夾...")
-    try:
-        if platform.system() == "Windows":
-            os.startfile(path)
-        elif platform.system() == "Darwin": # macOS
-            subprocess.Popen(["open", path])
-        else: # Linux
-            subprocess.Popen(["xdg-open", path])
-    except Exception as e:
-        print(f"無法自動開啟資料夾，請手動前往：{path}")
-
-def download_audio(url):
-    # 定位使用者系統的「下載 (Downloads)」資料夾
-    user_home = os.path.expanduser("~")
-    download_folder = os.path.join(user_home, "Downloads")
-    
-    # 防呆：若 Downloads 資料夾不存在，使用程式所在目錄
-    if not os.path.exists(download_folder):
-        download_folder = os.path.dirname(os.path.abspath(__file__))
-
-    print("\n" + "="*50)
-    print(f"📂 本次音樂將儲存至：{download_folder}")
-    print("="*50)
-    print("[分析中] 正在抓取 YouTube 音訊流，請稍候...")
-    
-    # 下載設定：存入下載路徑，最佳音質
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': os.path.join(download_folder, '%(title)s.%(ext)s'),
-        'restrictfilenames': True,
-        'noplaylist': True,
-        # 嘗試解碼成 MP3 (若環境無 FFmpeg 則維持 M4A/WebM)
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-    }
-    
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            print("\n" + "="*50)
-            print(f"🎉 音樂下載成功！")
-            print(f"🎵 歌名: {info.get('title')}")
-            print(f"💾 檔案已安全儲存在您的「下載」資料夾中！")
-            print("="*50)
-            
-            # 下載成功後自動開啟資料夾
-            open_download_folder(download_folder)
-
-    except yt_dlp.utils.PostProcessingError:
-        # 當無安裝 FFmpeg 時，會跳過轉檔，但音樂檔 (.m4a/.webm) 其實已完好下載
-        print("\n" + "="*50)
-        print("🎉 音樂下載成功！(已下載原生高品質音訊 m4a/webm 檔案)")
-        print("💡 提示：若需自動轉 MP3 格式，可在電腦中安裝 FFmpeg。")
-        print("💾 檔案已安全儲存在您的「下載」資料夾中！")
-        print("="*50)
-        open_download_folder(download_folder)
-        
-    except Exception as e:
-        print(f"\n❌ 下載失敗，可能原因：\n1. 網址錯誤\n2. 網路連線中斷\n3. YouTube 官方機制變更 (請更新套件: pip install -U yt-dlp)")
-        print(f"詳細錯誤訊息: {e}")
-
-if __name__ == "__main__":
-    print("==================================================")
-    print("        YouTube 音樂高音質快速下載器 (自帶存檔定位)")
-    print("==================================================")
-    
-    url = input("請貼上 YouTube 影片或音樂網址: ").strip()
-    if url:
-        download_audio(url)
-    else:
-        print("❌ 未輸入網址，程式結束。")
-    
-    input("\n[結束] 按下任意鍵退出視窗...")
-</textarea>
-                        </div>
-
-                        <!-- Running guide steps -->
-                        <h4 class="text-sm font-bold text-gray-200 mt-6 mb-3">🛠️ 如何在您的電腦上執行此程式？</h4>
-                        <div class="space-y-4 text-sm text-gray-300">
-                            <div class="flex gap-3">
-                                <div class="flex-shrink-0 bg-gray-800 text-violet-400 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">1</div>
-                                <p><strong>安裝 Python</strong>：前往 <a href="https://www.python.org" target="_blank" class="text-violet-400 hover:underline">Python 官方網站</a> 安裝最新版，安裝時<b>務必勾選</b> <code>Add Python to PATH</code>。</p>
-                            </div>
-                            <div class="flex gap-3">
-                                <div class="flex-shrink-0 bg-gray-800 text-violet-400 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">2</div>
-                                <p><strong>建立檔案</strong>：在桌面點右鍵新增一個文字文件，命名為 <code>yt_downloader.py</code>（副檔名必須為 <code>.py</code> ），將上方最新原始碼複製貼上存檔。</p>
-                            </div>
-                            <div class="flex gap-3">
-                                <div class="flex-shrink-0 bg-gray-800 text-violet-400 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">3</div>
-                                <p><strong>雙擊執行</strong>：直接點擊兩下執行 <code>yt_downloader.py</code>。貼上剛剛由網頁 AI 自動找出來的 YouTube 網址，完成後它會<b>自動彈出您的下載資料夾</b>，非常方便！</p>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -437,7 +282,7 @@ if __name__ == "__main__":
     <!-- Footer -->
     <footer class="bg-gray-950 border-t border-gray-800 py-6 text-center text-xs text-gray-500">
         <p class="mb-2">© 2026 YouTube 音樂下載 & MiniMax 提示詞大師. All rights reserved.</p>
-        <p>本工具採用國產高效能 Gemini 2.5 進行音樂解構，產出最佳生成配方。</p>
+        <p>本工具採用國產高效能 Gemini 2.5 加密防護技術，100% 免前端金鑰。</p>
     </footer>
 
     <!-- Script Area -->
